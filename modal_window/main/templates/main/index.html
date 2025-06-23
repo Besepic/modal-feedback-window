@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django modal window</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+        
+        .open-modal-btn {
+            position: relative;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .open-modal-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .open-modal-btn:active {
+            transform: translateY(1px);
+        }
+        
+        .open-modal-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border-radius: 50px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal.show {
+            opacity: 1;
+        }
+        
+        .modal-content {
+            position: relative;
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            transform: translateY(-50px);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+        
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #adb5bd;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        
+        .close:hover {
+            color: #495057;
+        }
+        
+        .modal-title {
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: #495057;
+            font-weight: 600;
+            font-size: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .form-label.required::after {
+            content: '*';
+            color: #dc3545;
+            margin-left: 4px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: #6c757d;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(108, 117, 125, 0.2);
+        }
+        
+        .form-control.error {
+            border-color: #dc3545;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        
+        .shake {
+            animation: shake 0.4s ease;
+        }
+    </style>
+</head>
+<body>
+
+<button class="open-modal-btn">Open modal window</button>
+
+<div id="myModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 class="modal-title">Feedback</h2>
+        <form method="post" id="contactForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="name" class="form-label required">Name</label>
+                {{form.name}}
+                <div id="nameError" class="error-message">Please enter your name.</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone" class="form-label required">Phone number</label>
+                {{form.phone}}
+                <div id="phoneError" class="error-message">Please enter your phone number.</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="email" class="form-label">Email</label>
+                {{form.email}}
+            </div>
+            
+            <button type="submit" class="submit-btn">Send</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Получаем элементы
+    const modal = document.getElementById("myModal");
+    const btn = document.querySelector(".open-modal-btn");
+    const span = document.querySelector(".close");
+    const form = document.getElementById("contactForm");
+    
+    // Открываем модальное окно с анимацией
+    btn.addEventListener('click', function() {
+        modal.style.display = "block";
+        setTimeout(() => {
+            modal.classList.add("show");
+        }, 10);
+    });
+    
+    // Закрываем модальное окно
+    function closeModal() {
+        modal.classList.remove("show");
+        setTimeout(() => {
+            modal.style.display = "none";
+        }, 300);
+    }
+    
+    span.addEventListener('click', closeModal);
+    
+    // Закрываем при клике вне окна
+    window.addEventListener('click', function(event) {
+        if (event.target == modal) {
+            closeModal();
+        }
+    });
+    
+    // Валидация формы
+    
+    
+    // Убираем анимацию тряски после завершения
+    document.querySelectorAll('.form-control').forEach(input => {
+        input.addEventListener('animationend', function() {
+            this.classList.remove('shake');
+        });
+    });
+</script>
+
+</body>
+</html>
